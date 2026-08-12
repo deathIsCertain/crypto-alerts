@@ -1,15 +1,15 @@
-name: News Alerts
+name: Crypto News Digest
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "30 0 * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  send-news:
+  send-digest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,13 +18,20 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r crypto_bot/requirements.txt
-      - name: Send new crypto news to Telegram
+      - name: Send daily crypto digest email
+        env:
+          GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CI_STATE_FILE: ci_state.json
+        run: python -m crypto_bot.run_crypto_bot --send-digest
+      - name: Send weekly PDF to channel (Sunday only)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           CI_STATE_FILE: ci_state.json
-        run: python -m crypto_bot.run_crypto_bot --ci-news 5
+        run: python -m crypto_bot.run_crypto_bot --send-weekly-pdf
       - name: Commit updated state (with retry)
         run: |
           git config user.name "github-actions[bot]"
@@ -34,7 +41,7 @@ jobs:
             echo "No state changes"
             exit 0
           fi
-          git commit -m "chore: update news alert state"
+          git commit -m "chore: update crypto digest state"
           for i in 1 2 3; do
             if git pull --rebase --autostash && git push; then
               echo "State pushed"

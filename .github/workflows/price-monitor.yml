@@ -24,8 +24,22 @@ jobs:
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           CI_STATE_FILE: ci_state.json
         run: python -m crypto_bot.run_crypto_bot --ci-check
-      - name: Commit updated state
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: update price monitor state"
-          file_pattern: ci_state.json
+      - name: Commit updated state (with retry)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ci_state.json
+          if git diff --cached --quiet; then
+            echo "No state changes"
+            exit 0
+          fi
+          git commit -m "chore: update price monitor state"
+          for i in 1 2 3; do
+            if git pull --rebase --autostash && git push; then
+              echo "State pushed"
+              exit 0
+            fi
+            echo "Push conflict, retrying ($i/3)"
+            sleep 5
+          done
+          exit 1

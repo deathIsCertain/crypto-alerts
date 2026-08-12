@@ -15,18 +15,33 @@ from crypto_bot.binance_client import BinanceClient
 
 STATE_FILE = os.path.join(BASE_DIR, "state.json")
 CI_STATE_FILE = os.getenv("CI_STATE_FILE", os.path.join(BASE_DIR, "ci_state.json"))
+DIGEST_EMAIL_TEMPLATE = os.path.join(BASE_DIR, "digest_email_template.html")
 
 
 def main():
     parser = argparse.ArgumentParser(description="OpenClaw crypto alerts and daily report")
     parser.add_argument("--send-report", action="store_true", help="Send the daily HTML report via Gmail")
+    parser.add_argument("--send-digest", action="store_true", help="Summarize collected articles and email the daily digest")
+    parser.add_argument("--send-weekly-pdf", action="store_true", help="Send the past 7 days as a PDF to Telegram (Sunday only)")
     parser.add_argument("--alert-news", type=int, metavar="N", help="Send top N news alerts to Telegram")
     parser.add_argument("--monitor", action="store_true", help="Run price-move monitor loop (sends alerts to Telegram)")
     parser.add_argument("--check-once", action="store_true", help="Run a single price-move check and exit (for scheduled tasks)")
     parser.add_argument("--ci-check", action="store_true", help="CI price-move check using committed state file (for GitHub Actions)")
-    parser.add_argument("--ci-news", type=int, metavar="N", help="CI: send only NEW news headlines (deduplicated via committed state)")
+    parser.add_argument("--ci-news", type=int, metavar="N", help="CI: collect only NEW news headlines (deduplicated via committed state)")
     parser.add_argument("--scheduler", action="store_true", help="Run the blocking scheduler (daily report)")
     args = parser.parse_args()
+
+    if args.send_digest:
+        from crypto_bot.digest import send_daily_digest
+
+        print(json.dumps(send_daily_digest(CI_STATE_FILE, DIGEST_EMAIL_TEMPLATE), indent=2))
+        return
+
+    if args.send_weekly_pdf:
+        from crypto_bot.digest import send_weekly_pdf
+
+        print(json.dumps(send_weekly_pdf(CI_STATE_FILE), indent=2))
+        return
 
     if args.send_report:
         result = send_daily_report()
@@ -38,24 +53,40 @@ def main():
         return
 
     if args.ci_news is not None:
+        import datetime as _dt
+
         from crypto_bot.news_fetcher import NewsFetcher
-        from crypto_bot.summarizer import summarize_article
+        from crypto_bot.summarizer import fetch_article_text
         from crypto_bot.telegram_alert import TelegramAlert
 
         state = load_state(CI_STATE_FILE)
         sent_titles = set(state.get("sent_news", []))
+        articles = state.get("articles", [])
+        existing = {a["title"] for a in articles}
         news = NewsFetcher().get_news(limit=args.ci_news)
         bot = TelegramAlert()
         new_sent = []
+        now = _dt.datetime.now(_dt.timezone.utc).isoformat()
         for item in news:
-            if item["title"] in sent_titles:
+            if item["title"] in sent_titles or item["title"] in existing:
                 continue
-            summary = summarize_article(item)
-            bot.send_message(TelegramAlert.format_news_alert(item, summary))
+            content = fetch_article_text(item.get("url", ""))
+            bot.send_message(TelegramAlert.format_news_alert(item))
+            articles.append(
+                {
+                    "title": item["title"],
+                    "url": item.get("url", ""),
+                    "description": item.get("description", ""),
+                    "content": content,
+                    "source": item.get("source", ""),
+                    "captured_at": now,
+                }
+            )
             new_sent.append(item["title"])
         state["sent_news"] = list(sent_titles | set(new_sent))[-200:]
+        state["articles"] = articles[-500:]
         save_state(CI_STATE_FILE, state)
-        print(f"Sent {len(new_sent)} new news alerts")
+        print(f"Collected {len(new_sent)} new crypto news articles")
         return
 
     if args.scheduler:

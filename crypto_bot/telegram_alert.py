@@ -16,6 +16,18 @@ class TelegramAlert:
         resp.raise_for_status()
         return resp.json()
 
+    def send_document(self, file_bytes, filename, caption=""):
+        if not self.channel_id:
+            raise RuntimeError("TELEGRAM_CHANNEL_ID is not configured")
+        url = f"{TELEGRAM_API_URL}/sendDocument"
+        files = {"document": (filename, file_bytes, "application/pdf")}
+        data = {"chat_id": self.channel_id}
+        if caption:
+            data["caption"] = caption
+        resp = requests.post(url, files=files, data=data, timeout=60)
+        resp.raise_for_status()
+        return resp.json()
+
     @staticmethod
     def format_price_alert(symbol, label, last_price, change_24h, change_7d, direction):
         arrow = "🟢" if change_24h >= 0 else "🔴"
@@ -29,11 +41,9 @@ class TelegramAlert:
         )
 
     @staticmethod
-    def format_news_alert(item, summary=None):
-        body = summary or item["title"]
+    def format_news_alert(item):
         return (
             f"📰 <b>MAJOR NEWS</b>\n"
             f"{item['title']}\n"
-            f"💬 {body}\n"
             f"<a href=\"{item.get('url', '#')}\">Read full article</a>\n"
         )

@@ -53,6 +53,10 @@ def _summarize_via_openrouter(title, content):
         return ""
 
 
+def fetch_article_text(url):
+    return _fetch_article_text(url)
+
+
 def summarize_article(item):
     if not SUMMARIZE_NEWS:
         return item["title"]
