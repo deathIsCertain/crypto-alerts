@@ -29,10 +29,11 @@ class TelegramAlert:
         )
 
     @staticmethod
-    def format_news_alert(item):
+    def format_news_alert(item, summary=None):
+        body = summary or item["title"]
         return (
             f"📰 <b>MAJOR NEWS</b>\n"
             f"{item['title']}\n"
-            f"Source: {item.get('source', 'N/A')}\n"
-            f"<a href=\"{item.get('url', '#')}\">Read more</a>\n"
+            f"💬 {body}\n"
+            f"<a href=\"{item.get('url', '#')}\">Read full article</a>\n"
         )

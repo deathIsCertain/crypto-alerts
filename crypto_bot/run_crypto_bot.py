@@ -39,6 +39,7 @@ def main():
 
     if args.ci_news is not None:
         from crypto_bot.news_fetcher import NewsFetcher
+        from crypto_bot.summarizer import summarize_article
         from crypto_bot.telegram_alert import TelegramAlert
 
         state = load_state(CI_STATE_FILE)
@@ -49,7 +50,8 @@ def main():
         for item in news:
             if item["title"] in sent_titles:
                 continue
-            bot.send_message(TelegramAlert.format_news_alert(item))
+            summary = summarize_article(item)
+            bot.send_message(TelegramAlert.format_news_alert(item, summary))
             new_sent.append(item["title"])
         state["sent_news"] = list(sent_titles | set(new_sent))[-200:]
         save_state(CI_STATE_FILE, state)

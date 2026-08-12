@@ -21,6 +21,11 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID", "")
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/free")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+SUMMARIZE_NEWS = os.getenv("SUMMARIZE_NEWS", "true").lower() in ("1", "true", "yes")
+
 ALERT_PRICE_CHANGE_PCT = 5.0
 
 GMAIL_CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials.json")
