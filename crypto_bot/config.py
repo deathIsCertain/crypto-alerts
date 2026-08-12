@@ -13,6 +13,8 @@ COIN_LABELS = {
 }
 
 BINANCE_BASE_URL = "https://api.binance.com/api/v3"
+BINANCE_MARKET_DATA_URL = "https://data-api.binance.vision/api/v3"
+BINANCE_BASE_URLS = [BINANCE_BASE_URL, BINANCE_MARKET_DATA_URL]
 BINANCE_KLINES_URL = f"{BINANCE_BASE_URL}/ticker/24hr"
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")

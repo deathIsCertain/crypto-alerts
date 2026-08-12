@@ -1,18 +1,26 @@
 import requests
 
-from .config import BINANCE_BASE_URL, COINS
+from .config import BINANCE_BASE_URLS, COINS
 
 
 class BinanceClient:
     def __init__(self):
         self.session = requests.Session()
 
+    def _request(self, path, params):
+        last_error = None
+        for base_url in BINANCE_BASE_URLS:
+            try:
+                url = f"{base_url}/{path}"
+                resp = self.session.get(url, params=params, timeout=15)
+                resp.raise_for_status()
+                return resp.json()
+            except requests.RequestException as e:
+                last_error = e
+        raise last_error
+
     def get_ticker(self, symbol):
-        url = f"{BINANCE_BASE_URL}/ticker/24hr"
-        params = {"symbol": symbol}
-        resp = self.session.get(url, params=params, timeout=15)
-        resp.raise_for_status()
-        data = resp.json()
+        data = self._request("ticker/24hr", {"symbol": symbol})
         return {
             "symbol": symbol,
             "last_price": float(data.get("lastPrice", 0)),
@@ -23,11 +31,7 @@ class BinanceClient:
         }
 
     def get_klines(self, symbol, interval="1d", limit=30):
-        url = f"{BINANCE_BASE_URL}/klines"
-        params = {"symbol": symbol, "interval": interval, "limit": limit}
-        resp = self.session.get(url, params=params, timeout=15)
-        resp.raise_for_status()
-        bars = resp.json()
+        bars = self._request("klines", {"symbol": symbol, "interval": interval, "limit": limit})
         closes = [float(bar[4]) for bar in bars]
         return closes
 
