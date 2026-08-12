@@ -58,6 +58,8 @@ def summarize_article(item):
         return item["title"]
     content = _fetch_article_text(item.get("url", ""))
     if not content:
+        content = (item.get("description") or "").strip()
+    if not content:
         return item["title"]
     summary = _summarize_via_openrouter(item.get("title", ""), content)
     return summary or item["title"]

@@ -81,14 +81,18 @@ class NewsFetcher:
             pub_m = re.search(
                 r"<pubDate>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</pubDate>", block, re.DOTALL
             )
+            desc_m = re.search(
+                r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL
+            )
             if not title_m:
                 continue
             title = _strip_html(title_m.group(1))
             link = _strip_html(link_m.group(1)) if link_m else ""
             pub = _strip_html(pub_m.group(1)) if pub_m else ""
+            desc = _strip_html(desc_m.group(1)) if desc_m else ""
             if not title or not NewsFetcher._is_relevant(title):
                 continue
-            items.append({"title": title, "url": link, "published_at": pub})
+            items.append({"title": title, "url": link, "published_at": pub, "description": desc})
         return items
 
     def _fetch_rss(self, url):

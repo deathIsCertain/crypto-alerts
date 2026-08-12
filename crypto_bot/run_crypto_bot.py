@@ -72,7 +72,9 @@ def main():
         alerts = check_and_alert_price_moves(previous, snapshot)
         if alerts:
             print(f"Alerts triggered: {alerts}")
-        save_state(CI_STATE_FILE, {"last_snapshot": snapshot, "last_checked": time.time()})
+        state["last_snapshot"] = snapshot
+        state["last_checked"] = time.time()
+        save_state(CI_STATE_FILE, state)
         return
 
     if args.check_once:
