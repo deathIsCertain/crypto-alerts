@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: #0f1115; color: #e6e8eb; margin: 0; padding: 24px; }
+  .container { max-width: 640px; margin: 0 auto; }
+  h1 { color: #f7931a; font-size: 22px; margin-bottom: 4px; }
+  .date { color: #8b949e; font-size: 13px; margin-bottom: 20px; }
+  .card { background: #1a1d24; border: 1px solid #2a2e37; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+  h2 { font-size: 16px; margin: 0 0 10px; color: #f7931a; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #2a2e37; }
+  th { color: #8b949e; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  .up { color: #3fb950; font-weight: 600; }
+  .down { color: #f85149; font-weight: 600; }
+  .news-item { padding: 8px 0; border-bottom: 1px solid #2a2e37; font-size: 14px; }
+  .news-item a { color: #58a6ff; text-decoration: none; }
+  .news-source { color: #8b949e; font-size: 12px; }
+  .metric { display: inline-block; background: #2a2e37; border-radius: 8px; padding: 10px 14px; margin: 4px; }
+  .metric .label { color: #8b949e; font-size: 12px; display: block; }
+  .metric .value { font-size: 18px; font-weight: 700; }
+  .footer { color: #6e7681; font-size: 12px; margin-top: 24px; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Daily Crypto Update</h1>
+    <div class="date">{{ report_date }}</div>
+
+    <div class="card">
+      <h2>📈 Market Snapshot</h2>
+      <table>
+        <thead>
+          <tr><th>Coin</th><th>Price</th><th>24h</th><th>7d</th><th>24h High</th><th>24h Low</th></tr>
+        </thead>
+        <tbody>
+          {% for coin in coins %}
+          <tr>
+            <td>{{ coin.label }}</td>
+            <td>${{ coin.price }}</td>
+            <td class="{{ coin.change_24h_class }}">{{ coin.change_24h }}%</td>
+            <td class="{{ coin.change_7d_class }}">{{ coin.change_7d }}%</td>
+            <td>${{ coin.high }}</td>
+            <td>${{ coin.low }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>🧠 Sentiment & On-chain</h2>
+      <div>
+        <span class="metric"><span class="label">Fear & Greed</span><span class="value">{{ fear_greed.value }} — {{ fear_greed.classification }}</span></span>
+        <span class="metric"><span class="label">BTC Block Height</span><span class="value">{{ btc_onchain.block_height }}</span></span>
+        <span class="metric"><span class="label">BTC Fastest Fee</span><span class="value">{{ btc_onchain.fastest_fee_sat }} sat/vB</span></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📰 Top News</h2>
+      {% if news %}
+        {% for item in news %}
+        <div class="news-item">
+          <a href="{{ item.url }}">{{ item.title }}</a><br>
+          <span class="news-source">{{ item.source }} · {{ item.published_at }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div>No major news headlines captured today.</div>
+      {% endif %}
+    </div>
+
+    <div class="footer">
+      Generated automatically by OpenClaw · Data from Binance API · Not financial advice
+    </div>
+  </div>
+</body>
+</html>
