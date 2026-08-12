@@ -1,5 +1,6 @@
 import html
 import re
+import time
 
 import requests
 
@@ -27,12 +28,11 @@ def summarize_via_openrouter(full_text):
         return ""
     url = f"{OPENROUTER_BASE_URL}/chat/completions"
     prompt = (
-        "You are an Indian stock market analyst. Summarize the following news article in 2-3 tight "
-        "sentences for a daily email digest. Lead with the single most important fact for an "
-        "investor (index movement, stock impact, earnings, regulation, IPO, etc.), then one "
-        "supporting detail. Do not use markdown, emojis, or bullet lists.\n\n"
-        f"{full_text}"
-    )
+        "Write a 2-3 sentence original summary of the news below for a daily email digest. "
+        "Do NOT reuse the headline. Lead with the most important fact for an investor in Indian "
+        "markets (index move, stock impact, earnings, regulation, IPO, etc.), then one supporting "
+        "detail. Never repeat the title. No markdown, no emojis, no bullets.\n\n{full_text}"
+    ).format(full_text=full_text)
     payload = {
         "model": OPENROUTER_MODEL,
         "messages": [
@@ -48,6 +48,9 @@ def summarize_via_openrouter(full_text):
     }
     try:
         resp = requests.post(url, json=payload, headers=headers, timeout=60)
+        if resp.status_code == 429:
+            time.sleep(30)
+            resp = requests.post(url, json=payload, headers=headers, timeout=60)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"].strip()
     except Exception:

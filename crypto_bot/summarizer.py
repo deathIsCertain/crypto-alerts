@@ -1,5 +1,6 @@
 import html
 import re
+import time
 
 import requests
 
@@ -46,6 +47,9 @@ def _summarize_via_openrouter(title, content):
     }
     try:
         resp = requests.post(url, json=payload, headers=headers, timeout=60)
+        if resp.status_code == 429:
+            time.sleep(30)
+            resp = requests.post(url, json=payload, headers=headers, timeout=60)
         resp.raise_for_status()
         summary = resp.json()["choices"][0]["message"]["content"].strip()
         return summary

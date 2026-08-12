@@ -73,6 +73,24 @@ def pick_top3(articles):
             },
             timeout=60,
         )
+        if resp.status_code == 429:
+            import time as _time
+
+            _time.sleep(30)
+            resp = requests.post(
+                f"{OPENROUTER_BASE_URL}/chat/completions",
+                headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": OPENROUTER_MODEL,
+                    "messages": [
+                        {"role": "system", "content": "You pick the most impactful news. Reply in the exact format requested."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "max_tokens": 200,
+                    "temperature": 0.2,
+                },
+                timeout=60,
+            )
         resp.raise_for_status()
         text = (resp.json()["choices"][0]["message"]["content"] or "").strip()
         picks = []
