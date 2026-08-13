@@ -1,5 +1,7 @@
+import datetime
 import os
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
 
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
@@ -60,3 +62,7 @@ EMAIL_TEMPLATE_FILE = os.path.join(BASE_DIR, "email_template.html")
 TIMEZONE = "Asia/Kolkata"
 REPORT_HOUR = 8
 REPORT_MINUTE = 30
+
+
+def ist_now():
+    return datetime.datetime.now(ZoneInfo(TIMEZONE))

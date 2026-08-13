@@ -1,10 +1,9 @@
-import datetime
 import json
 import os
 
 from jinja2 import Template
 
-from .config import ALERT_PRICE_CHANGE_PCT, EMAIL_TEMPLATE_FILE, INDICES, INDICES_LABELS, SECTOR_INDICES, SECTOR_LABELS
+from .config import ALERT_PRICE_CHANGE_PCT, EMAIL_TEMPLATE_FILE, INDICES, INDICES_LABELS, SECTOR_INDICES, SECTOR_LABELS, ist_now
 from .gmail_sender import GmailSender
 from .news_fetcher import IndiaNewsFetcher
 from .telegram_alert import TelegramAlert
@@ -31,7 +30,7 @@ def build_html_report(snapshot, news):
     sector_rows = [_row(s, snapshot[s]) for s in SECTOR_INDICES if s in snapshot]
     with open(EMAIL_TEMPLATE_FILE, "r", encoding="utf-8") as f:
         template = Template(f.read())
-    now = datetime.datetime.now(datetime.timezone.utc).astimezone()
+    now = ist_now()
     report_date = now.strftime("%A, %B %d, %Y — %H:%M %Z")
     return template.render(
         report_date=report_date,
@@ -46,7 +45,7 @@ def send_daily_report():
     snapshot = client.full_snapshot()
     news = IndiaNewsFetcher().get_news(5)
     html = build_html_report(snapshot, news)
-    subject = f"India Market Update — {datetime.date.today().strftime('%b %d, %Y')}"
+    subject = f"India Market Update — {ist_now().strftime('%b %d, %Y')}"
     GmailSender().send_html_email(subject, html)
     return {"subject": subject, "email_sent": True}
 

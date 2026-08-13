@@ -1,9 +1,8 @@
-import datetime
 import json
 import os
 
 from .binance_client import BinanceClient
-from .config import ALERT_PRICE_CHANGE_PCT, COINS, COIN_LABELS, EMAIL_TEMPLATE_FILE
+from .config import ALERT_PRICE_CHANGE_PCT, COINS, COIN_LABELS, EMAIL_TEMPLATE_FILE, ist_now
 from .gmail_sender import GmailSender
 from .news_fetcher import NewsFetcher
 from .telegram_alert import TelegramAlert
@@ -35,7 +34,7 @@ def build_html_report(snapshot, market_data):
         )
     with open(EMAIL_TEMPLATE_FILE, "r", encoding="utf-8") as f:
         template = Template(f.read())
-    now = datetime.datetime.now(datetime.timezone.utc).astimezone()
+    now = ist_now()
     report_date = now.strftime("%A, %B %d, %Y — %H:%M %Z")
     return template.render(
         report_date=report_date,
@@ -52,7 +51,7 @@ def send_daily_report():
     snapshot = client.get_market_snapshot()
     market_data = fetcher.get_aggregated()
     html = build_html_report(snapshot, market_data)
-    subject = f"Daily Crypto Update — {datetime.date.today().strftime('%b %d, %Y')}"
+    subject = f"Daily Crypto Update — {ist_now().strftime('%b %d, %Y')}"
     sender = GmailSender()
     sender.send_html_email(subject, html)
     return {"subject": subject, "email_sent": True}

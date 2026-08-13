@@ -14,6 +14,7 @@ from .config import (
     OPENROUTER_MODEL,
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHANNEL_ID,
+    ist_now,
 )
 from .gmail_sender import GmailSender
 from .summarizer import summarize_article
@@ -114,7 +115,7 @@ def pick_top3(articles):
 def _render_daily_html(articles, top3, summaries_by_title, email_template_file):
     with open(email_template_file, "r", encoding="utf-8") as f:
         template = Template(f.read())
-    now = datetime.datetime.now(datetime.timezone.utc).astimezone()
+    now = ist_now()
     report_date = now.strftime("%A, %B %d, %Y — %H:%M %Z")
     top_rows = [{"title": t, "url": u, "reason": r} for t, u, r in top3]
     news_rows = [
@@ -141,7 +142,7 @@ def send_daily_digest(state_file, email_template_file):
 
     top3 = pick_top3(articles)
     html = _render_daily_html(articles, top3, summaries, email_template_file)
-    subject = f"Crypto News Digest — {datetime.date.today().strftime('%b %d, %Y')}"
+    subject = f"Crypto News Digest — {ist_now().strftime('%b %d, %Y')}"
 
     if not (GMAIL_EMAIL and GMAIL_APP_PASSWORD):
         raise RuntimeError("GMAIL_EMAIL and GMAIL_APP_PASSWORD are required")
@@ -193,7 +194,7 @@ def _build_weekly_pdf(archive):
     h_style = ParagraphStyle("H", fontName=font, fontSize=11, leading=14, spaceBefore=8, textColor=colors.HexColor("#58a6ff"))
     body_style = ParagraphStyle("Body", fontName=font, fontSize=9.5, leading=13, alignment=TA_LEFT)
     story = [Paragraph("Crypto Weekly News Archive", title_style)]
-    story.append(Paragraph(datetime.datetime.now(datetime.timezone.utc).astimezone().strftime("%A, %B %d, %Y"), day_style))
+    story.append(Paragraph(ist_now().strftime("%A, %B %d, %Y"), day_style))
 
     by_day = {}
     for a in archive:
@@ -223,7 +224,7 @@ def _build_weekly_pdf(archive):
 def send_weekly_pdf(state_file):
     state = _load_json(state_file)
     archive = state.get("weekly_archive", [])
-    now = datetime.datetime.now(datetime.timezone.utc).astimezone()
+    now = ist_now()
     if now.strftime("%A") != "Sunday" or not archive:
         return {"pdf_sent": False, "articles": len(archive)}
     if not (TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID):
